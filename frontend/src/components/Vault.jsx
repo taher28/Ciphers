@@ -44,6 +44,11 @@ const Vault = () => {
       }
       
       fetchNotes(); // Refresh the list
+
+      if (window.refreshAnalytics) {
+      window.refreshAnalytics();
+    }
+    
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving note:', error);

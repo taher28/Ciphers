@@ -1,4 +1,4 @@
-// src/components/Analytics.jsx
+// src/components/Analytics.jsx - UPDATED WITH REAL DATA
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -15,7 +15,6 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -31,7 +30,7 @@ ChartJS.register(
 const Analytics = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('monthly'); // daily, weekly, monthly
+  const [timeRange, setTimeRange] = useState('monthly');
 
   useEffect(() => {
     fetchAnalytics();
@@ -46,36 +45,19 @@ const Analytics = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      // Mock data for demonstration
-      setStats(getMockData());
     } finally {
       setLoading(false);
     }
   };
 
-  const getMockData = () => {
-    const baseData = {
-      totalNotes: 47,
-      totalUsers: 5,
-      recentNotes: 12,
-      averageNotesPerWeek: 8,
-      userGrowth: [
-        { period: 'Jan', users: 2, notes: 15 },
-        { period: 'Feb', users: 3, notes: 22 },
-        { period: 'Mar', users: 4, notes: 35 },
-        { period: 'Apr', users: 5, notes: 47 }
-      ],
-      resourceDistribution: [
-        { category: 'Personal', notes: 25, color: '#FF6384' },
-        { category: 'Work', notes: 12, color: '#36A2EB' },
-        { category: 'Ideas', notes: 6, color: '#FFCE56' },
-        { category: 'Learning', notes: 4, color: '#4BC0C0' }
-      ],
-      dailyActivity: [12, 19, 8, 15, 12, 17, 14, 16, 11, 13, 15, 18]
-    };
+  // Refresh analytics when new notes are added
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAnalytics();
+    }, 5000); // Refresh every 5 seconds
 
-    return baseData;
-  };
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -84,7 +66,7 @@ const Analytics = () => {
           <h1>Analytics Dashboard</h1>
         </div>
         <div className="security-card" style={{ textAlign: 'center', padding: '40px' }}>
-          <div>Loading analytics data...</div>
+          <div>Loading real-time analytics...</div>
         </div>
       </div>
     );
@@ -97,84 +79,58 @@ const Analytics = () => {
           <h1>Analytics Dashboard</h1>
         </div>
         <div className="security-card" style={{ textAlign: 'center', padding: '40px' }}>
-          <div>No data available</div>
+          <div>No data available. Create some notes with tags to see analytics!</div>
         </div>
       </div>
     );
   }
 
-  // User Growth Chart Data
+  // User Growth Chart - Real Data
   const userGrowthData = {
-    labels: stats.userGrowth.map(item => item.period),
+    labels: stats.userGrowth?.map(item => item.period) || [],
     datasets: [
       {
-        label: 'Number of Users',
-        data: stats.userGrowth.map(item => item.users),
+        label: 'Notes Created',
+        data: stats.userGrowth?.map(item => item.notes) || [],
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        yAxisID: 'y',
-        tension: 0.4
-      },
-      {
-        label: 'Total Notes',
-        data: stats.userGrowth.map(item => item.notes),
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        yAxisID: 'y1',
-        tension: 0.4
+        tension: 0.4,
+        fill: true
       }
     ]
   };
 
   const userGrowthOptions = {
     responsive: true,
-    interaction: {
-      mode: 'index',
-      intersect: false,
-    },
-    scales: {
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: {
-          display: true,
-          text: 'Number of Users'
-        }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Total Notes'
-        },
-        grid: {
-          drawOnChartArea: false,
-        },
-      },
-    },
     plugins: {
       title: {
         display: true,
-        text: 'User Growth & Notes Over Time'
+        text: 'Your Notes Growth Over Time'
       },
       legend: {
         position: 'top',
       }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Number of Notes'
+        }
+      }
     }
   };
 
-  // Resource Distribution Chart Data
+  // Resource Distribution - Real Tags Data
   const resourceDistributionData = {
-    labels: stats.resourceDistribution.map(item => item.category),
+    labels: stats.resourceDistribution?.map(item => item.category) || [],
     datasets: [
       {
         label: 'Number of Notes',
-        data: stats.resourceDistribution.map(item => item.notes),
-        backgroundColor: stats.resourceDistribution.map(item => item.color),
-        borderColor: stats.resourceDistribution.map(item => item.color),
+        data: stats.resourceDistribution?.map(item => item.count) || [],
+        backgroundColor: stats.resourceDistribution?.map(item => item.color) || [],
+        borderColor: stats.resourceDistribution?.map(item => item.color) || [],
         borderWidth: 2,
       },
     ],
@@ -184,11 +140,11 @@ const Analytics = () => {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top',
+        position: 'bottom',
       },
       title: {
         display: true,
-        text: 'Notes Distribution by Category'
+        text: 'Notes Distribution by Tags'
       },
       tooltip: {
         callbacks: {
@@ -204,13 +160,13 @@ const Analytics = () => {
     },
   };
 
-  // Daily Activity Chart Data
+  // Daily Activity - Real Data
   const dailyActivityData = {
-    labels: ['6am', '9am', '12pm', '3pm', '6pm', '9pm', '12am', '3am'],
+    labels: stats.dailyActivity?.labels || [],
     datasets: [
       {
         label: 'Notes Created',
-        data: stats.dailyActivity,
+        data: stats.dailyActivity?.data || [],
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 2,
@@ -227,7 +183,7 @@ const Analytics = () => {
       },
       title: {
         display: true,
-        text: 'Daily Activity Pattern'
+        text: 'Recent Activity'
       },
     },
     scales: {
@@ -252,29 +208,42 @@ const Analytics = () => {
             onChange={(e) => setTimeRange(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #e0e0e0' }}
           >
-            <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
+            <option value="all">All Time</option>
           </select>
+          <button 
+            onClick={fetchAnalytics}
+            style={{ 
+              padding: '8px 12px', 
+              background: '#2d2d2d', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Real-time Stats */}
       <div className="security-cards">
         <div className="security-card">
           <h3>📊 Total Notes</h3>
           <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2d2d2d', margin: '10px 0' }}>
             {stats.totalNotes}
           </p>
-          <p>All time notes created</p>
+          <p>Your total notes</p>
         </div>
         
         <div className="security-card">
-          <h3>👥 Total Users</h3>
+          <h3>🏷️ Tagged Notes</h3>
           <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2d2d2d', margin: '10px 0' }}>
-            {stats.totalUsers}
+            {stats.taggedNotes}
           </p>
-          <p>Registered users</p>
+          <p>Notes with tags</p>
         </div>
         
         <div className="security-card">
@@ -286,56 +255,50 @@ const Analytics = () => {
         </div>
         
         <div className="security-card">
-          <h3>📅 Weekly Average</h3>
+          <h3>🔖 Unique Tags</h3>
           <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2d2d2d', margin: '10px 0' }}>
-            {stats.averageNotesPerWeek}
+            {stats.uniqueTags}
           </p>
-          <p>notes per week</p>
+          <p>different tags used</p>
         </div>
       </div>
 
-      {/* Charts Grid */}
+      {/* Real-time Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '30px' }}>
-        {/* User Growth Chart */}
         <div className="security-card">
           <Line data={userGrowthData} options={userGrowthOptions} />
         </div>
 
-        {/* Resource Distribution Chart */}
         <div className="security-card">
           <Doughnut data={resourceDistributionData} options={resourceDistributionOptions} />
         </div>
 
-        {/* Daily Activity Chart */}
         <div className="security-card" style={{ gridColumn: 'span 2' }}>
           <Bar data={dailyActivityData} options={dailyActivityOptions} />
         </div>
       </div>
 
-      {/* Detailed Statistics */}
-      <div className="security-card" style={{ marginTop: '24px' }}>
-        <h3>📋 Detailed Statistics</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', padding: '20px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2d2d2d' }}>{stats.totalNotes}</div>
-            <div style={{ color: '#666' }}>Total Notes</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2d2d2d' }}>{stats.totalUsers}</div>
-            <div style={{ color: '#666' }}>Active Users</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2d2d2d' }}>{stats.recentNotes}</div>
-            <div style={{ color: '#666' }}>Recent Notes</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2d2d2d' }}>
-              {Math.round(stats.totalNotes / stats.totalUsers)}
-            </div>
-            <div style={{ color: '#666' }}>Avg per User</div>
+      {/* Tag Statistics */}
+      {stats.resourceDistribution && stats.resourceDistribution.length > 0 && (
+        <div className="security-card" style={{ marginTop: '24px' }}>
+          <h3>📋 Tag Statistics</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', padding: '20px' }}>
+            {stats.resourceDistribution.slice(0, 6).map((tag, index) => (
+              <div key={index} style={{ textAlign: 'center', padding: '15px', background: '#f9f9f9', borderRadius: '8px' }}>
+                <div style={{ 
+                  width: '20px', 
+                  height: '20px', 
+                  background: tag.color, 
+                  borderRadius: '50%', 
+                  margin: '0 auto 10px' 
+                }}></div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#2d2d2d' }}>{tag.count}</div>
+                <div style={{ color: '#666', fontSize: '0.9rem' }}>{tag.category}</div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

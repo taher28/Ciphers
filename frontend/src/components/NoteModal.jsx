@@ -1,32 +1,50 @@
-// components/NoteModal.js
+// src/components/NoteModal.jsx - UPDATED
 import React, { useState, useEffect } from 'react';
 
 const NoteModal = ({ note, onSave, onDelete, onClose }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [tags, setTags] = useState('');
+  const [tagSuggestions] = useState(['Personal', 'Work', 'Ideas', 'Learning', 'Projects', 'Journal', 'Tasks']);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      setTags(note.tags ? note.tags.join(', ') : '');
     } else {
       setTitle('');
       setContent('');
+      setTags('');
     }
   }, [note]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Convert tags string to array
+    const tagsArray = tags.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+    
     onSave({
-      id: note?.id,
+      id: note?._id,
       title,
-      content
+      content,
+      tags: tagsArray
     });
+  };
+
+  const addTagSuggestion = (tag) => {
+    const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
+    if (!currentTags.includes(tag)) {
+      setTags([...currentTags, tag].join(', '));
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
         <div className="modal-header">
           <h2>{note ? 'Edit Note' : 'New Note'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
@@ -43,6 +61,38 @@ const NoteModal = ({ note, onSave, onDelete, onClose }) => {
                 required
               />
             </div>
+            
+            <div className="form-group">
+              <label htmlFor="note-tags">Tags (comma separated)</label>
+              <input
+                type="text"
+                id="note-tags"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="e.g., Personal, Work, Ideas"
+              />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                <span style={{ fontSize: '0.9rem', color: '#666' }}>Suggestions: </span>
+                {tagSuggestions.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => addTagSuggestion(tag)}
+                    style={{
+                      padding: '2px 8px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ddd',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
             <div className="form-group">
               <label htmlFor="note-content">Content</label>
               <textarea
@@ -68,7 +118,7 @@ const NoteModal = ({ note, onSave, onDelete, onClose }) => {
               <button 
                 type="button" 
                 className="btn btn-outline"
-                onClick={() => onDelete(note.id)}
+                onClick={() => onDelete(note._id)}
                 style={{color: '#e74c3c', borderColor: '#e74c3c'}}
               >
                 Delete
